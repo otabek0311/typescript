@@ -1,85 +1,104 @@
-// 1. Object keylarini katta harfga o'zgartirish (Object.entries va reduce bilan)
 function upperCaseKeys(obj: object): object {
-    return Object.entries(obj).reduce((acc, [k, v]) => {
-        acc[k.toUpperCase()] = v;
-        return acc;
-    }, {} as any);
+    const result: any = {};
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            result[key.toUpperCase()] = (obj as any)[key];
+        }
+    }
+    return result;
 }
 console.log(upperCaseKeys({ name: "Ali", age: 25, country: "Uzbekistan" }));
 
-// 2. FizzBuzz (ternary bilan)
 function fizzBuzz(n: number): string[] {
-    return Array.from({ length: n }, (_, i) => {
-        const x = i + 1;
-        return x % 15 === 0 ? "FizzBuzz" : x % 3 === 0 ? "Fizz" : x % 5 === 0 ? "Buzz" : x + "";
-    });
+    const result: string[] = [];
+    for (let i = 1; i <= n; i++) {
+        if (i % 15 === 0) result.push("FizzBuzz");
+        else if (i % 3 === 0) result.push("Fizz");
+        else if (i % 5 === 0) result.push("Buzz");
+        else result.push(i.toString());
+    }
+    return result;
 }
 console.log(fizzBuzz(15));
 
-// 3. Permutatsiyalar (rekursiv, Set bilan unikal qilish)
 function getPermutations(str: string): string[] {
     if (str.length <= 1) return [str];
-    const out = new Set<string>();
+    const result = new Set<string>();
     for (let i = 0; i < str.length; i++) {
-        for (const perm of getPermutations(str.slice(0, i) + str.slice(i + 1)))
-            out.add(str[i] + perm);
+        const char = str[i];
+        const rest = str.slice(0, i) + str.slice(i + 1);
+        for (const perm of getPermutations(rest)) {
+            result.add(char + perm);
+        }
     }
-    return [...out];
+    return Array.from(result);
 }
 console.log(getPermutations("abc"));
 
-// 4. Ikki object farqlari (faqat oddiy keylar uchun)
-function jsonDiff(a: object, b: object): object {
-    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-    const res: any = {};
-    keys.forEach(k => {
-        if ((a as any)[k] !== (b as any)[k])
-            res[k] = { old: (a as any)[k], new: (b as any)[k] };
+function jsonDiff(obj1: object, obj2: object): object {
+    const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
+    const result: any = {};
+    keys.forEach(key => {
+        if ((obj1 as any)[key] !== (obj2 as any)[key]) {
+            result[key] = { old: (obj1 as any)[key], new: (obj2 as any)[key] };
+        }
     });
-    return res;
+    return result;
 }
 console.log(jsonDiff({ name: "Ali", age: 25 }, { name: "Ali", age: 26 }));
 
-// 5. IP manzillarni saralash (split va map bilan)
 function sortIPs(ips: string[]): string[] {
-    return ips.sort((a, b) =>
-        a.split('.').map(Number).reduce((acc, v, i) => acc * 256 + v - b.split('.').map(Number)[i], 0)
-    );
+    return ips.sort((ipA, ipB) => {
+        const partsA = ipA.split('.').map(Number);
+        const partsB = ipB.split('.').map(Number);
+        for (let i = 0; i < 4; i++) {
+            if (partsA[i] !== partsB[i]) return (partsA[i] ?? 0) - (partsB[i] ?? 0);
+        }
+        return 0;
+    });
 }
 console.log(sortIPs(["192.168.1.1", "10.0.0.1", "172.16.0.1", "192.168.0.1"]));
 
-// 6. Stringni qisqartirish (oddiy for bilan)
 function compressString(str: string): string {
-    let res = "", cnt = 1;
+    let result = "";
+    let count = 1;
     for (let i = 1; i <= str.length; i++) {
-        if (str[i] === str[i - 1]) cnt++;
-        else res += str[i - 1] + cnt, cnt = 1;
+        if (str[i] === str[i - 1]) {
+            count++;
+        } else {
+            result += (str[i - 1] ?? '') + count;
+            count = 1;
+        }
     }
-    return res;
+    return result;
 }
 console.log(compressString("aaabbcddd"));
 
-// 7. Sudoku validatsiyasi (Set va for bilan)
-function isValidSudoku(b: number[][]): boolean {
+function isValidSudoku(board: number[][]): boolean {
     for (let i = 0; i < 9; i++) {
-        let row = new Set(), col = new Set();
+        const row = new Set<number>();
+        const col = new Set<number>();
         for (let j = 0; j < 9; j++) {
-            if (b[i][j] && row.has(b[i][j])) return false;
-            if (b[i][j]) row.add(b[i][j]);
-            if (b[j][i] && col.has(b[j][i])) return false;
-            if (b[j][i]) col.add(b[j][i]);
+            const rowVal = board[i]?.[j];
+            const colVal = board[j]?.[i];
+            if (rowVal && row.has(rowVal)) return false;
+            if (rowVal) row.add(rowVal);
+            if (colVal && col.has(colVal)) return false;
+            if (colVal) col.add(colVal);
         }
     }
-    for (let r = 0; r < 9; r += 3)
-        for (let c = 0; c < 9; c += 3) {
-            let s = new Set();
-            for (let i = 0; i < 3; i++)
+    for (let row = 0; row < 9; row += 3) {
+        for (let col = 0; col < 9; col += 3) {
+            const block = new Set<number>();
+            for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) {
-                    let v = b[r + i][c + j];
-                    if (v && s.has(v)) return false;
-                    if (v) s.add(v);
+                    const value = board[row + i]?.[col + j];
+                    if (value && block.has(value)) return false;
+                    if (value) block.add(value);
                 }
+            }
         }
+    }
     return true;
 }
 console.log(isValidSudoku([
@@ -94,14 +113,13 @@ console.log(isValidSudoku([
     [0, 0, 0, 0, 8, 0, 0, 7, 9]
 ]));
 
-// 8. Anagramlarni guruhlash (Map bilan)
 function groupAnagrams(words: string[]): string[][] {
-    const m = new Map<string, string[]>();
-    for (const w of words) {
-        const k = w.split('').sort().join('');
-        if (!m.has(k)) m.set(k, []);
-        m.get(k)!.push(w);
+    const map = new Map<string, string[]>();
+    for (const word of words) {
+        const key = word.split('').sort().join('');
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(word);
     }
-    return [...m.values()];
+    return Array.from(map.values());
 }
 console.log(groupAnagrams(["eat", "tea", "tan", "ate", "nat", "bat"]));
